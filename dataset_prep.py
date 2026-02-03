@@ -8,6 +8,8 @@ import time
 from playwright.sync_api import sync_playwright
 import os
 
+#testing
+
 def printSet(path):
     movieData = []
     columns = []
