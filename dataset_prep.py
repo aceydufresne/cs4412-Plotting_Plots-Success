@@ -6,6 +6,7 @@ from bs4 import BeautifulSoup
 import requests
 import time
 from playwright.sync_api import sync_playwright
+import os
 
 def printSet(path):
     movieData = []
@@ -23,13 +24,15 @@ def createSet(titles):
     for title in titles:
         title =title.strip()
         t = title.replace(" ", "+")
-        url = strPath1 + title + strPath2
+        url = strPath1 + t + strPath2
         page = requests.get(url)
         soup = BeautifulSoup(page.text, 'html.parser')
         print(soup)
         time.sleep(1)
 
 def scrapeExample(titles):
+    xpath_prefix = 'xpath='
+    
     strPath1 = "https://www.imdb.com/find/?q="
     strPath2 = "&s=tt&ttype=ft"
     title = titles[27]
@@ -37,7 +40,7 @@ def scrapeExample(titles):
     t = title.replace(" ", "+")
     #print(t)
     url = strPath1 + t + strPath2
-    #print(url)
+    print(url)
     
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
@@ -46,19 +49,89 @@ def scrapeExample(titles):
     
     page = requests.get(url, headers=headers, timeout = 20)
     soup = BeautifulSoup(page.text, 'html.parser')
-    #print(soup.title.string)
+    #print(soup)
+    #with open('imbdHTML.txt', 'w') as file:
+    #    file.write(str(soup))
+    
     
     #https://www.youtube.com/watch?v=cO997sPYZ9U
     playwright = sync_playwright().start()
     browser = playwright.firefox.launch(headless = False)
     
-    page = browser.new_page(java_script_enabled = True, viewport = {'width': 200, 'height': 100})
-    page.goto(url, wait_until = 'load')
+    page = browser.new_page(java_script_enabled = True, viewport= {'width': 1920, 'height': 1080})
+    page.goto(url, wait_until = "domcontentloaded", timeout = 6000)
     
-    time.sleep(10)
+    ##xpath_input = '//input[@placeholder="search imbd"]'
+    ##page.wait_for_selector(xpath_prefix + xpath_input, timeout = 5000)
+    ##input_element = page.query_selector(xpath_prefix + xpath_input)
+    
+    ##if input_element:
+    page.wait_for_selector('a[href^="/title/tt"]', timeout = 6000)
+    link = page.locator('a[href^="/title/tt"]').first
+    href = link.get_attribute("href")
+    
+    if href:
+        full_url = "https://www.imdb.com" + href
+        page.goto(full_url)
+
+    photoLink = page.locator('a[data-testid="hero__photo-link"]').click()
+    
+    
+    
+    
+    
+    st=True
+    i = 0
+    folderName = t
+    seen = set()
+    try:
+        os.makedirs(folderName, exist_ok=True)
+    except OSError as e:
+        print(f"BAD folder")
+    
+    while st:
+        nextButton = page.locator('div[role="button"][aria-label="Next"]')
+        imgURL = saveImg(url, page, headers)
+        
+        #nextButton = page.locator('div[role="button"][aria-label="Next"]').click()
+        
+        if nextButton.count() == 0 or imgURL in seen:
+            st = False
+            break
+        
+        else:
+            #nextButton = page.locator('div[role="button"][aria-label="Next"]')
+            #imgURL = saveImg(url, page, headers)
+            response = requests.get(imgURL, headers=headers,timeout=30)
+            
+            if response.status_code == 200:
+                filename = t + str(i) + ".jpeg"
+                filename2 = os.path.join(folderName, filename)
+                with open(filename2, 'wb') as file:
+                    file.write(response.content)
+                    
+            else:
+                print("BAD")
+                
+            i+=1
+            page.wait_for_selector('img[data-testid="media-viewer-image"]', timeout=20000)
+            nextButton.click()
+        seen.add(imgURL)
+        
+    page.wait_for_timeout(30000)
     page.close()
     browser.close()
     playwright.stop()
+    
+    
+    
+
+def saveImg(url,page, headers):
+    page.wait_for_selector('img[data-testid="media-viewer-image"]', timeout= 60000)
+    imgScrape = page.locator('img[data-testid="media-viewer-image"]')
+    srcset = imgScrape.get_attribute("srcset")
+    
+    return imgScrape.get_attribute("src")
 
 if __name__ == "__main__":
     path = "rotten_tomatoes_top_movies.csv"
