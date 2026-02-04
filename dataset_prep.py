@@ -8,8 +8,6 @@ import time
 from playwright.sync_api import sync_playwright
 import os
 
-#testing
-
 def printSet(path):
     movieData = []
     columns = []
@@ -90,42 +88,54 @@ def scrapeExample(titles):
         os.makedirs(folderName, exist_ok=True)
     except OSError as e:
         print(f"BAD folder")
+    countBar = page.locator('span[data-testid="action-bar__gallery-count"]').inner_text()
+    current, total = countBar.split(" of ")
+    current = int(current.strip())
+    total = int(total.strip())
     
     while st:
+        
         nextButton = page.locator('div[role="button"][aria-label="Next"]')
-        imgURL = saveImg(url, page, headers)
+        #imgURL = saveImg(url, page, headers)
+        img = page.locator('img[data-testid="media-viewer-image"]').first
         
-        #nextButton = page.locator('div[role="button"][aria-label="Next"]').click()
-        
-        if nextButton.count() == 0 or imgURL in seen:
+        #if nextButton.count() == 0 or imgURL in seen:
+        if i >= total:
             st = False
             break
         
         else:
-            #nextButton = page.locator('div[role="button"][aria-label="Next"]')
-            #imgURL = saveImg(url, page, headers)
-            response = requests.get(imgURL, headers=headers,timeout=30)
+            #response = requests.get(imgURL, headers=headers,timeout=30)
             
-            if response.status_code == 200:
-                filename = t + str(i) + ".jpeg"
-                filename2 = os.path.join(folderName, filename)
-                with open(filename2, 'wb') as file:
-                    file.write(response.content)
-                    
-            else:
-                print("BAD")
+            #if response.status_code == 200:
+            filename = t + str(i) + ".png"
+            filename2 = os.path.join(folderName, filename)
+            print(filename2)
                 
+            img.screenshot(path=filename2)
+                #with open(filename2, 'wb') as file:
+                    #file.write(response.content)
+                    
+            #else:
+                #print("BAD")
+            
+            #takeImg(page, url,  filename2)   
             i+=1
-            page.wait_for_selector('img[data-testid="media-viewer-image"]', timeout=20000)
-            nextButton.click()
-        seen.add(imgURL)
+            #page.wait_for_selector('img[data-testid="media-viewer-image"]', timeout=20000)
+            if i < total:
+                nextButton.click()
+            else:
+                break
+        #seen.add(imgURL)
         
     page.wait_for_timeout(30000)
     page.close()
     browser.close()
     playwright.stop()
     
-    
+#def takeImg(page,url, filepath):
+    #byte[] arr = page.screenshot
+    #page.scrrenshot(new Page.ScreenshotOptions().setPath(filepath))
     
 
 def saveImg(url,page, headers):
