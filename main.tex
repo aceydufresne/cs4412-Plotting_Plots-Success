@@ -1,0 +1,117 @@
+\documentclass[conference]{IEEEtran}
+
+% Language setting
+% Replace `english' with e.g. `spanish' to change the document language
+\usepackage[english]{babel}
+\usepackage{float}
+% Set page size and margins
+% Replace `letterpaper' with `a4paper' for UK/EU standard size
+\usepackage[letterpaper,top=2cm,bottom=2cm,left=3cm,right=3cm,marginparwidth=1.75cm]{geometry}
+
+% Useful packages
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage[colorlinks=true, allcolors=blue]{hyperref}
+
+\author{
+\IEEEauthorblockN{Acey Dufresne}
+\IEEEauthorblockA{
+Student ID: 000960649\\
+Kennesaw State University\\
+cdufres1@students.kennesaw.edu
+}
+}
+
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+The Adobe Creative Jam for North America focuses on project creation utilizing Adobe’s Premiere Rush. The final product for submission in the contest is a short film utilizing Rush, to be submitted and judged by Adobe. The target of this proposal is to collect successful film projects, compare these projects, and discover patterns that help propel projects to success, then using these patterns determine a strategy and structured plan for the project’s submission. Here is the repository link and information: \url{https://github.com/aceydufresne/cs4412-Plotting_Plots-Success}, and \url{{https://www.kaggle.com/datasets/thedevastator/rotten-tomatoes-top-movies-ratings-and-technical}}.
+\vspace{30 pt}
+
+\end{abstract}
+
+\section{Introduction}
+
+Two datasets were used for this project, the first was \href{https://www.kaggle.com/datasets/thedevastator/rotten-tomatoes-top-movies-ratings-and-technical}{ Rotten Tomatoes dataset, from an independent Kaggle user1.1}. The dataset contains over nine-hundred entries, ranging from films made in 1920 through 2020, a large range, and quite recent. This data set has a plethora of information that can be utilized, including the critical ratings, audience ratings, and financial return.
+
+This data set is primarily used to determine the results, how successful a project was, having multiple metrics of success is important as well. For example, if a film is very financially successful, but struggles in ratings, both critical and otherwise, then we can plot the ‘result,’ on a graph with a vector embedding. Counter wise, if a film has top notch reviews, but was financially unsuccessful, we can compare the vector values of both, taking into account all aspects of what makes a project well built.
+
+However, this data set only addresses the results of a project. To find out why a film is successful, we need to know what a film is. Quite blatantly, we may say a film is determined by a budget, or perhaps the crew and actors that worked on that project. Here we run into an issue, how can we determine how much of an impact each component has on the final result. How can we know how much of the film was impacted by the director, or the camera crew lead, or perhaps the main cast. How much does the budget affect the final output? Are these even what makes a film, a “film”?
+
+‘The Grand Budapest Hotel,’ and ‘I, Frankenstein’  were both released in the same year, With Wes Anderson’s film having half the budget Stuart Beattie’s project had access to, and yet Anderson almost doubled the box office returns of ‘I, Frankenstein.’ Surely, this is not the right metric, with outliers like this, which we can show by comparing the films in the \href{https://www.kaggle.com/datasets/thedevastator/rotten-tomatoes-top-movies-ratings-and-technical}{ data set.11 against one another}.
+
+The audience may be influenced when going to theatres, or browsing a streaming service,  by who directed a movie, or the cast that acts within it, but rarely do audiences make choices based on budget reports. Another flaw, just because a director makes a good film, does not mean they will always perform at this standard, in fact this is a rare feat, with only a few exceptions. The counter example, of notably seasoned and skilled directors who typically, over their career, build successful franchises and films, sometimes make ill quality films.
+
+We don’t necessarily need to put too much of an emphasis on these factors as well, what we really need is to find the patterns of successful films, based on those films alone, not who made them. So how do we determine this? Well, when we watch a movie, the medium is visual, quite apparently a good film looks good. A movie should be compelling, the story should keep viewers engaged. How do we create metrics for this type of non-qualitative standards. Obviously as humans we know when a film looks good, the lighting is deliberate, the color grading is pleasing to the eye, the individual shots are framed well.
+
+This means we need a new data set, a data set of films, the average film that a viewer watches in the theatre is typically shot at twenty-four frames per second, with theatre releases having an average runtime between ninety minutes and one-hundred-twenty minutes. That’s five-thousand-four-hundred seconds for a ninety minute movie, and one-hundred-twenty-nine-thousand-six-hundred frames, with over nine-hundred movies in our initial dataset, that comes out to be 116,640,000 frames for the complete dataset.
+
+That’s enough to determine a lot of patterns, but we run into some issues. Memory is a big concern, for this dataset I have an external SSD with 2-terrabytes of storage, this is not enough to hold the proposed dataset. We can get around this issue, if we think of a movie, the average movie will have a lot of shots filmed on a rig, so many shots will be similar to one another. We just need a general idea of how the ‘ambience’ is within a film, so we can use a SNN, to compare frames and if two frames have above a threshold value of similarity we only need to keep one.
+
+The next problem is a little more complicated, how do we gather over nine-hundred movies. Surely streaming services, for example, Amazon, Netflix, and Disney, have all these entries. This is the case, but all these services have preventative measures to deter obtaining copies of these films. Which means we need to manually screen record all these films. With nine-hundred movies, each around an hour and a half long in duration, this is well over a thousand hours of recording. Nearly two months of solid recording, with no breaks between. I don’t have the time or resources to facilitate this process.
+
+So we need a custom dataset, with frames from these movies, but we can’t directly access the films, or rather, we choose not to. Unfortunately, there is no public data set that has what we are looking for, is there? If you notice from the original dataset that was introduced, the data set is based on information from the corporation ‘Rotten Tomatoes,’ but not released by them. We can follow the same process for a custom data set. ‘ImDb,’ is another movie critic site, with a plethora of data, including over nine-hundred images per the average film. This is more than enough for what the project calls for.
+
+The first step is to create an agent that can remotely access the ‘ImDb’ site, it then iterates through the initial data set, and saves all the images for each film. The script is run using a combination of the PlayWright library, and the BeautifulSoup library. At the same time, the agent also saves the Synopsis of the films, which as you may recall the initial dataset also contains, but a slightly different version. This will become important in a few moments.
+
+
+The other important aspect of a movie is the plot. As we collect the synopsis of films, we are building our corpus to decompose these narratives. We now have two summarizations of each movie, and can begin to compare the elements of a narrative that make a movie good.
+
+As the agent is building this data set, we can begin to plot and vectorize the data, before it is complete. This is the benefit of utilizing the first data set, we already have the results. So, essentially we can manually back-propagate to find what are the most important aspects of a film. As we find values for each component we are searching for, we can compare to how the film performed financially, and critically, then begin to determine which aspects influence the results the most.
+
+
+\section{Architecture and Structure:}
+The flow of the pattern determination: the main program initializes the main dataset, and the agent. The agent begins scraping data from the 'ImBd site.' Passing that data into a combined data set. Which can then be used to form 
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=.4\linewidth]{Copy of Architecture.drawio.png}
+\caption{\label{fig:1}Rough Architecture Planned}
+\end{figure}
+
+
+the vectors which will be analyzed in the 'Algorithms and Techniques,' section. As you can see, there is a proposed SNN, which would be used essentially to create the embeddings for the frames, and then use the algorithms mentioned to find the distance between vectors.
+
+
+
+\section{Algorithms and Techniques}
+
+As discussed previously, the scale will be an issue, we talked about budgets, while I do not believe they are overtly important to the end outcome, we still need to check, just in case, so all the datasets need to be normalized, to see what attributes are not contributing anything to the end results. Likewise, with as many dimensions as we plan to measure, budget, contrast, lighting, color-grading, cast, director, year-made, framing, plot-narrative, we will most certainly have issues with scaling, which is why we are using the Cosine distance, to attempt to combat this, as well, we will most likely apply some dimensionality reduction, especially after normalization, we may have a better understanding of what we don’t need to check for.
+
+This is where the Aproiri Algorithm may become useful, as long as we normalize the data, and prepare it a little more, since we know the results of each film before hand, we can take only the successes, and apply labels to our attributes, so for example, everything has a one-hundred percent amount possible, so for the rule-of-thirds, one-hundred percent would look like three rectangles stacked ontop of one another, then we can apply a percentage of how close the input is to that maximum value. To do this, we need to decide what classifies a successful film, for example top ten percent of box offices returns, any film that is in this top margin would qualify, or maybe the top twenty-five percent and above a seventy-five percent in critic reviews. We can run multiple tests, for each case scenerio, testing which ones return the best results.
+
+
+\section{Discovery Questions}
+We’ve already went over the questions we need to answer, but to briefly summarize:
+
+•	What attributes are the most important, or have the largest impact on the output of a film’s success.
+
+
+•	How much does the brand of a movie, cast and directors, affect a film, compared to the visual aspects of cinema.
+
+
+•	Can a studio “buy” success, we have several examples that they cannot, but removing outliers, is there a pattern where: “more money = more general success.”\\
+
+
+The final prediction should just be a set of ranked attributes, in order of prevalence. For example, what we aren’t looking for: the most successful movie, we want: what unique factors and attributes contributed to the general overall success of each film. As we already know what movies performed well, we need to move backwards from success, to determine the function that created that said success.
+
+\section{Rough Schedule:}
+The timeline is a bit rough, as the to create the proposal I had to begin the initial implementation:
+\begin{figure}[H]
+\centering
+\includegraphics[width=1\linewidth]{Schedule1.jpg}
+\caption{\label{fig:1}Rough Calendar}
+\end{figure}
+The web scraper is already built, so I just need to run it, and collect the data, I do need to take several days, to work on several other projects, which if you have time to check out:
+
+•\href{https://github.com/aceydufresne/GoMap.py-Application-using-CARLA-Monocular-Depth-Estimation-Algorithm}{ monocular depth estimation algorithm, dataset preparation, that we discussed last semester}
+
+•\href{https://github.com/aceydufresne/completelyEthicalCareerDataScraper}{Completely ethical LinkedIn career data scraper(does not violate any terms and conditions, I'm sure)}
+
+\section{References:}
+
+
+
+\end{document}
