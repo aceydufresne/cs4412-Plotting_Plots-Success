@@ -172,11 +172,13 @@ def embedPlot(path):
     
     #lowercased
     words = testPlot.lower()
+    
     words = words.split()
-    print(words)
+    #print(words)
+    ##print(len(words))
     #start configuring vectprs
     windows = []
-    i = 0
+    i = 1
     sentence = []
     for word in words:
         if i <= 10:
@@ -184,13 +186,17 @@ def embedPlot(path):
             sentence.append(word)
             i+=1
         elif i>10:
-            i = 0
+            i = 1
             windows.append(sentence)
-            sentence = sentence.clear()
+            #sentence = sentence.clear()
+            sentence = []
+    #https://www.youtube.com/watch?v=OlhNZg4gOvA
+    #print(windows[0])
+    for sentences in windows:
+        embeddings = model.encode(sentences)
+    print(embeddings)
     
-    print(windows[0])
-    #embeddings = model.encode(sentence)
-
+    
 if __name__ == "__main__":
     path = "rotten_tomatoes_top_movies.csv"
     
