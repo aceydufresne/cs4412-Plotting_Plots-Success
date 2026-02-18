@@ -7,6 +7,13 @@ import requests
 import time
 from playwright.sync_api import sync_playwright
 import os
+import csv
+from sentence_transformers import SentenceTransformer
+from pypdf import PdfReader
+model = SentenceTransformer('all-MiniLM-l6-v2')
+import nltk
+from nltk import PorterStemmer
+from nltk.corpus import stopwords
 
 def printSet(path):
     movieData = []
@@ -145,8 +152,51 @@ def saveImg(url,page, headers):
     
     return imgScrape.get_attribute("src")
 
+
+def embedPlot(path):
+    movieData = []
+    columns = []
+    #replaced the csv reader for more efficient sorting
+    df = pd.read_csv(path)
+    #print(df["title"])
+    plots = df["synopsis"]
+    titles = df["title"]
+    
+    testName = titles[0]
+    testPlot = plots[0]
+    
+    #We need punctution for right now
+    #/match = re.findall(r"[A-Za-z0-9]+", testPlot)
+    #print(match)
+    #print( "\nremoving punctuation")
+    
+    #lowercased
+    words = testPlot.lower()
+    words = words.split()
+    print(words)
+    #start configuring vectprs
+    windows = []
+    i = 0
+    sentence = []
+    for word in words:
+        if i <= 10:
+            #window/kernel size is 10
+            sentence.append(word)
+            i+=1
+        elif i>10:
+            i = 0
+            windows.append(sentence)
+            sentence = sentence.clear()
+    
+    print(windows[0])
+    #embeddings = model.encode(sentence)
+
 if __name__ == "__main__":
     path = "rotten_tomatoes_top_movies.csv"
+    
     titles = printSet(path)
+    
     #createSet(titles)
-    scrapeExample(titles)
+    ###scrapeExample(titles)
+    ##path = kagglehub.dataset_download("thedevastator/rotten-tomatoes-top-movies-ratings-and-technical")
+    embedPlot(path)
