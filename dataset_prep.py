@@ -21,6 +21,13 @@ from numpy.linalg import norm
 import matplotlib.pyplot as plt
 import numpy as np
 from sklearn.decomposition import PCA
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import normalize
+from sklearn.preprocessing import StandardScaler
+from sklearn.decomposition import PCA
+from sklearn.preprocessing import StandardScaler
+import seaborn as sns
+from sklearn.cluster import KMeans
 
 
 def printSet(path):
@@ -236,7 +243,7 @@ def findSimiliarity(set):
             temp = cosine_similarity([emb1], [emb2])[0][0]
             returnSet.append(((title1,title2),temp))
         #print(returnSet)
-        return returnSet
+    return returnSet
             
 
 def graphPlot(groupingName,genreData):
@@ -262,13 +269,58 @@ def graphVectors(cosSet):
     path = "rotten_tomatoes_top_movies.csv"
     df = pd.read_csv(path)
     
-    t1 = [t[0] for t in cosSet]
-    t2 = [x[1] for x in cosSet]
-    cos = [y[2] for y in cosSet]
-    s1 = score1 = df.loc[df['title'] == t1, 'critic_score'].values[0]
-    s2 = score1 = df.loc[df['title'] == t2, 'critic_score'].values[0]
+    titles = [t[0] for t in cosSet]
+    cos = [x[1] for x in cosSet]
+    #bracket = [z[3] for z in cosSet]
+    score = dict(zip(df['title'], df['critic_score']))
+    xSet = []
+    ySet1 = []
+    ySet2 = []
     
-    for t1,t2,cos in cosSet:
+    score = dict(zip(df['title'], df['critic_score']))
+    
+    
+    for val, cosVal in cosSet:
+        #two movie titles
+        t1,t2 = val
+        #search by title to get the score
+        s1 = score.get(t1)
+        s2 = score.get(t2)
+        
+        if s1 == "critic_score":
+            print("caught")
+        elif s1 <= 20:
+            bracket = 10
+        elif s1 <= 30:
+            bracket = 20
+        elif s1 <= 40:
+            bracket = 30
+        elif s1 <= 50:
+            bracket = 40
+        elif s1 <= 60:
+            bracket = 50
+        elif s1 <= 70:
+            bracket = 60
+        elif s1 <= 80:
+            bracket = 70
+        elif s1 <= 90:
+            bracket = 80
+        else:
+            bracket = 90
+        
+        ySet1.append(s1)
+        ySet2.append(s2)
+        xSet.append(cosVal)
+    
+    plt.scatter(xSet, ySet1, color='blue', label='Movie 1')
+    plt.scatter(xSet, ySet2, color='red', label='Movie 2')
+    
+    plt.xlabel('Cosine Similirity (kg)')
+    plt.ylabel('Critic Score')
+    plt.title(f'Comparison of similirity and critic reviews for {bracket}')
+    plt.legend()
+    plt.grid(True)
+    plt.show()
         
 
 def graphVectors1(vectors):
@@ -293,7 +345,59 @@ def graphVectors1(vectors):
 
     plt.show()
     
+def normalization(vectors):
+    normalized = []
+    #scaler = StandardScaler()
+    #X_scaled = scaler.fit_transform(vectors)
+    for title, embedding in vectors:
+        vector = np.array(embedding, dtype=float)
+        norm = np.linalg.norm(vector)
+        if norm == 0:
+            #return vector
+            normalized.append(vector)
+        else:
+            normalized.append(vector / norm)
+    return normalized
 
+def pcaProc(nv):
+    x = np.array(nv)
+    print(x.shape)
+    pca = PCA(n_components=20)
+    pca.fit(x)
+    data_pca = pca.transform(x)
+    data_pca = pd.DataFrame(data_pca,columns=['PC1','PC2','PC3','PC4','PC5','PC6','PC7','PC8','PC9','PC10','PC11','PC12','PC13','PC14','PC15','PC16','PC17','PC18', 'PC19', 'PC20'])
+    
+    sns.heatmap(data_pca.corr())
+    plt.show()
+    
+    print(data_pca.head())
+    print(pca.explained_variance_ratio_)
+    #https://www.geeksforgeeks.org/machine-learning/k-means-clustering-introduction/
+    clusters = {}
+    k = 10
+    X = data_pca
+    
+    kmeans = KMeans(n_clusters=10, random_state=42)
+    data_pca["cluster"] = kmeans.fit_predict(data_pca)
+
+    sns.scatterplot(
+        x=data_pca["PC1"],
+        y=data_pca["PC2"],
+        hue=data_pca["cluster"]
+    )
+    plt.show()
+    
+    data_pca["cluster"].value_counts().sort_index().plot(kind="bar")
+
+    plt.xlabel("Cluster")
+    plt.ylabel("Number of Movies")
+    plt.title("Movies per Cluster")
+    plt.show()
+
+    return data_pca, kmeans
+    
+    
+    
     
 if __name__ == "__main__":
     path = "rotten_tomatoes_top_movies.csv"
@@ -382,8 +486,14 @@ if __name__ == "__main__":
     allScores.append(set80)
     allScores.append(set90)
     
+    allNormVec = []
     for set in allScores:
         test1 = vectorizeData(set)
-        test2 = findSimiliarity(test1)
-        graphVectors(test2)
-        
+        normVec = normalization(test1)
+        #test2 = findSimiliarity(test1)
+        #cosVec = findSimiliarity(normVec)
+        #print(test1)
+        #graphVectors(cosVec)
+        #print(len(test2))
+        allNormVec.extend(normVec)
+    pcaProc(allNormVec)
