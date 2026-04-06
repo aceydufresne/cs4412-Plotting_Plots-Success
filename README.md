@@ -25,3 +25,11 @@ The architecture relies on the aft-fore mentioned sets, where the main script wi
 Download and install Python 3.1, as well as the PlayWright library, BeautifulSoup dependicy, json library, os library, sys library.
 Set the playwright object variable to 'headless,'
 Run the script
+
+For the visual processing:
+-Run the scrapeExample() function once, to build the dataset.
+-Adjust the image amount variable, to determine what depth you need the dataset to be
+(By default it is set at 10, which is 15,000 images in total.
+-Update the storage pathway, to your preferred storage location
+-Then run all additional methods, to obtain the independent attribute analysis
+
