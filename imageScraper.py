@@ -410,7 +410,114 @@ def plotGoodScenesVsCritic(results, df1):
     plt.grid(True)
     plt.tight_layout()
     plt.show()
+    
+def edgeThirdsScore(path):
+    results = []
 
+    for folder in path.iterdir():
+        movieScores = []
+
+        for imageFile in folder.iterdir():
+            img = cv.imread(str(imageFile), cv.IMREAD_GRAYSCALE)
+            if img is None:
+                continue
+
+            img = cv.resize(img, (300, 300))
+            edges = cv.Canny(img, 100, 200)
+            h, w = edges.shape
+            x1, x2 = w // 3, 2 * w // 3
+            y1, y2 = h // 3, 2 * h // 3
+            band = 12
+            thirdsMask = np.zeros_like(edges)
+
+            thirdsMask[:, x1-band:x1+band] = 255
+            thirdsMask[:, x2-band:x2+band] = 255
+            thirdsMask[y1-band:y1+band, :] = 255
+            thirdsMask[y2-band:y2+band, :] = 255
+
+            totalEdges = np.count_nonzero(edges)
+
+            if totalEdges == 0:
+                continue
+
+            edgesOnThirds = np.count_nonzero((edges > 0) & (thirdsMask > 0))
+
+            score = edgesOnThirds / totalEdges
+            movieScores.append(score)
+
+        if len(movieScores) > 0:
+            results.append({
+                "title": folder.name,
+                "thirdsEdgeScore": float(np.mean(movieScores))
+            })
+
+    return results
+
+def compareFeatureToScore(featureData, df1, featureName):
+    featureDf = pd.DataFrame(featureData)
+
+    merged = pd.merge(featureDf, df1, on="title", how="inner")
+
+    merged["critic_score"] = pd.to_numeric(merged["critic_score"], errors="coerce")
+    merged[featureName] = pd.to_numeric(merged[featureName], errors="coerce")
+
+    merged = merged.dropna(subset=["critic_score", featureName])
+
+    corr = merged[featureName].corr(merged["critic_score"])
+    print(f"{featureName} vs Critic Score:", corr)
+
+    plt.scatter(merged[featureName], merged["critic_score"])
+    plt.xlabel(featureName)
+    plt.ylabel("Critic Score")
+    plt.title(f"{featureName} vs Critic Score")
+    plt.show()
+
+def buildRuleSummary(df1, contrastData=None, moodData=None, edgeData=None):
+    
+    summary = df1[["title", "critic_score"]].copy()
+    summary["critic_score"] = pd.to_numeric(summary["critic_score"], errors="coerce")
+
+    if contrastData is not None:
+        contrastDf = pd.DataFrame(contrastData)
+        summary = pd.merge(summary, contrastDf, on="title", how="left")
+
+        contrastAvg = summary["avgContrast"].mean()
+        summary["followsContrast"] = summary["avgContrast"] >= contrastAvg
+
+    if moodData is not None:
+        moodDf = pd.DataFrame(moodData, columns=["title", "moodScore"])
+        summary = pd.merge(summary, moodDf, on="title", how="left")
+
+        summary["followsMood"] = summary["moodScore"] > 0
+
+    if edgeData is not None:
+        edgeDf = pd.DataFrame(edgeData)
+        summary = pd.merge(summary, edgeDf, on="title", how="left")
+
+        edgeAvg = summary["thirdsEdgeScore"].mean()
+        summary["followsThirds"] = summary["thirdsEdgeScore"] >= edgeAvg
+    ruleCols = [
+        col for col in summary.columns 
+        if col.startswith("follows")
+    ]
+    summary["totalRulesFollowed"] = summary[ruleCols].sum(axis=1)
+
+    return summary
+       
+       
+def compareRulesToCritic(summary):
+    summary = summary.dropna(subset=["critic_score", "totalRulesFollowed"])
+
+    corr = summary["totalRulesFollowed"].corr(summary["critic_score"])
+    print("Total Rules Followed vs Critic Score:", corr)
+
+    plt.scatter(summary["totalRulesFollowed"], summary["critic_score"])
+    plt.xlabel("Total Cinematic Rules Followed")
+    plt.ylabel("Critic Score")
+    plt.title("Cinematic Rules Followed vs Critic Score")
+    plt.show()
+    
+    
        
 if __name__ == "__main__":
     path = "rotten_tomatoes_top_movies.csv"
@@ -432,3 +539,20 @@ if __name__ == "__main__":
     #orderContrast(setData)
     results = moodFind(path2)
     plotGoodScenesVsCritic(results,df1)
+    
+    contrastData = findContrast(path2)
+    moodData = moodFind(path2)
+    edgeData = edgeThirdsScore(path2)
+
+    summary = buildRuleSummary(
+        df1,
+        contrastData=contrastData,
+        moodData=moodData,
+        edgeData=edgeData
+    )
+
+    print(summary.head())
+
+    compareRulesToCritic(summary)
+
+    summary.to_csv("filmRuleSummary.csv", index=False)
